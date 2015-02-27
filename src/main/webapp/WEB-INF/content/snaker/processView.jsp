@@ -23,16 +23,15 @@
             $('#currentActorDIV').append(',' + returnValue);
         }
     }
-	function display(process, active) {
+	function display(process, state) {
 		/** view*/
 		$('#snakerflow').snakerflow($.extend(true,{
 			basePath : "${ctx}/styles/js/snaker/",
             ctxPath : "${ctx}",
             orderId : "${order.id}",
-			restore : eval("(" + process + ")")
-			,
+			restore : eval("(" + process + ")"),
 			editable : false
-			},eval("(" + active + ")")
+			},eval("(" + state + ")")
 		));
 	}
 </script>
@@ -101,7 +100,7 @@
 		$.ajax({
 				type:'GET',
 				url:"${ctx}/snaker/process/json",
-				data:"orderId=${order.id}",
+				data:"processId=${processId}&orderId=${order.id}",
 				async: false,
 				globle:false,
 				error: function(){
@@ -109,7 +108,7 @@
 					return false;
 				},
 				success: function(data){
-					display(data.process, data.active);
+					display(data.process, data.state);
 				}
 			});
 		</script>

@@ -5,7 +5,6 @@
 		lineHeight:15,
 		basePath:"",
         ctxPath:"",
-        formPath:"",
         orderId:"",
 		rect:{
 			attr:{
@@ -58,6 +57,7 @@
 		},
 		historyRects:{
 			rects:[],
+            rectAttr:{stroke:"#00ff00","stroke-width":2},
 			pathAttr:{
 				path:{stroke:"#00ff00"},
 				arrow:{stroke:"#00ff00",fill:"#00ff00"}
@@ -147,6 +147,14 @@
         },
 
         tip : function(rect, name) {
+        	var ar = designer.config.activeRects;
+        	var matched = false;
+        	for(var u=0;u<ar.rects.length;u++){
+				if(ar.rects[u].name == name){
+					matched = true;
+				}
+        	}
+        	if(!matched) return;
             var tipDIV = document.getElementById("tipDIV");
             if (tipDIV) {
                 document.body.removeChild(tipDIV);
@@ -171,7 +179,8 @@
                     return false;
                 },
                 success: function(data){
-                    tipDIV.innerHTML="<div style='width:180px; height:20px;border: 1px solid #d2dde2;'><a href='javascript:void(0)' onclick='addTaskActor(\"" + name + "\");' class='btnAdd'></a><a href='javascript:void(0)' class='btnClock'></a></div><div style='width:180px; height:40px;border: 1px solid #d2dde2;'><div id='currentActorDIV' style='width:180px; height:20px;'>参与者:" + data.actors + "</div><div id='arrivalDIV' style='width:180px; height:20px;'>抵达时间:" + data.createTime + "</div></div>";
+                    //tipDIV.innerHTML="<div style='width:180px; height:20px;border: 1px solid #d2dde2;'><a href='javascript:void(0)' onclick='addTaskActor(\"" + name + "\");' class='btnAdd'></a><a href='javascript:void(0)' class='btnClock'></a><a href='javascript:void(0)' onclick='document.body.removeChild(document.getElementById(\"tipDIV\"))' class='btnDel'></a></div><div style='width:180px; height:40px;border: 1px solid #d2dde2;'><div id='currentActorDIV' style='width:180px; height:20px;'>参与者:" + data.actors + "</div><div id='arrivalDIV' style='width:180px; height:20px;'>抵达时间:" + data.createTime + "</div></div>";
+                	tipDIV.innerHTML="<div style='width:180px; height:20px;border: 1px solid #d2dde2;'><a href='javascript:void(0)' onclick='document.body.removeChild(document.getElementById(\"tipDIV\"))' class='btnDel'></a></div><div style='width:180px; height:40px;border: 1px solid #d2dde2;'><div id='currentActorDIV' style='width:180px; height:20px;'>参与者:" + data.actors + "</div><div id='arrivalDIV' style='width:180px; height:20px;'>抵达时间:" + data.createTime + "</div></div>";
                     document.body.appendChild(tipDIV);
                 }
             });
@@ -212,6 +221,13 @@
         _text.click(function(){
             if (!designer.config.editable) {
                 designer.util.tip(_rect, _o.props['name'].value);
+            } else {
+                var returnValue = window.showModalDialog(designer.config.ctxPath + '/config/form?lookup=1',window,'dialogWidth:1000px;dialogHeight:600px');
+                if(returnValue) {
+                    var formPath = "/config/form/use/" + returnValue;
+                    _o.props.form.value = formPath;
+                    document.getElementById("pform").innerHTML = '<input style="width:98%;" value="' + formPath + '"/>';
+                }
             }
         });
         _rect.click(function(){
@@ -221,9 +237,9 @@
         });
         _rect.dblclick(function(){
             if (designer.config.editable) {
-                var returnValue = window.showModalDialog(designer.config.ctxPath + '/form/form?lookup=1',window,'dialogWidth:1000px;dialogHeight:600px');
+                var returnValue = window.showModalDialog(designer.config.ctxPath + '/config/form?lookup=1',window,'dialogWidth:1000px;dialogHeight:600px');
                 if(returnValue) {
-                    var formPath = designer.config.formPath + returnValue + ".html";
+                    var formPath = "/config/form/use/" + returnValue;
                     _o.props.form.value = formPath;
                     document.getElementById("pform").innerHTML = '<input style="width:98%;" value="' + formPath + '"/>';
                 }
@@ -691,10 +707,11 @@
                 });
                 var dragMove = function(dx, dy){
                     var x = (_ox+dx), y=(_oy+dy);
-                    _this.moveTo(x,y)};
+                    _this.moveTo(x,y)
+                };
                 var dragStart = function(){
-                    if(_t=="big"){_ox=_n.attr("_dotList")+_o.attr.bigDot.width/2;_oy=_n.attr("_ox")+_o.attr.bigDot.height/2}
-                    if(_t=="small"){_ox=_n.attr("_dotList")+_o.attr.smallDot.width/2;_oy=_n.attr("_ox")+_o.attr.smallDot.height/2}
+                    if(_t=="big"){_ox=_n.attr("x")+_o.attr.bigDot.width/2;_oy=_n.attr("y")+_o.attr.bigDot.height/2}
+                    if(_t=="small"){_ox=_n.attr("x")+_o.attr.smallDot.width/2;_oy=_n.attr("y")+_o.attr.smallDot.height/2}
                 };
                 var dragUp = function(){}
             }
@@ -707,9 +724,53 @@
             this.moveTo=function(Q,T){
                 this.pos({x:Q,y:T});
                 switch(_t){
-                    case"from":if(_rt&&_rt.right()&&_rt.right().type()=="to"){_rt.right().pos(designer.util.connPoint(_to.getBBox(),_pos))}if(_rt&&_rt.right()){_rt.pos(designer.util.center(_pos,_rt.right().pos()))}break;
-                    case"big":if(_rt&&_rt.right()&&_rt.right().type()=="to"){_rt.right().pos(designer.util.connPoint(_to.getBBox(),_pos))}if(_lt&&_lt.left()&&_lt.left().type()=="from"){_lt.left().pos(designer.util.connPoint(_from.getBBox(),_pos))}if(_rt&&_rt.right()){_rt.pos(designer.util.center(_pos,_rt.right().pos()))}if(_lt&&_lt.left()){_lt.pos(designer.util.center(_pos,_lt.left().pos()))}var S={x:_pos.x,y:_pos.y};if(designer.util.isLine(_lt.left().pos(),S,_rt.right().pos())){_t="small";_n.attr(_o.attr.smallDot);this.pos(S);var P=_lt;_lt.left().right(_lt.right());_lt=_lt.left();P.remove();var R=_rt;_rt.right().left(_rt.left());_rt=_rt.right();R.remove()}break;
-                    case"small":if(_lt&&_rt&&!designer.util.isLine(_lt.pos(),{x:_pos.x,y:_pos.y},_rt.pos())){_t="big";_n.attr(_o.attr.bigDot);var P=new dot("small",designer.util.center(_lt.pos(),_pos),_lt,_lt.right());_lt.right(P);_lt=P;var R=new dot("small",designer.util.center(_rt.pos(),_pos),_rt.left(),_rt);_rt.left(R);_rt=R}break;
+                    case"from":
+                    	if(_rt&&_rt.right()&&_rt.right().type()=="to"){
+                    		_rt.right().pos(designer.util.connPoint(_to.getBBox(),_pos))
+                    	}
+                    	if(_rt&&_rt.right()){
+                    		_rt.pos(designer.util.center(_pos,_rt.right().pos()))
+                    	}
+                    	break;
+                    case"big":
+                    	if(_rt&&_rt.right()&&_rt.right().type()=="to"){
+                    		_rt.right().pos(designer.util.connPoint(_to.getBBox(),_pos))
+                    	}
+                    	if(_lt&&_lt.left()&&_lt.left().type()=="from"){
+                    		_lt.left().pos(designer.util.connPoint(_from.getBBox(),_pos))
+                    	}
+                    	if(_rt&&_rt.right()){
+                    		_rt.pos(designer.util.center(_pos,_rt.right().pos()))
+                    	}
+                    	if(_lt&&_lt.left()){
+                    		_lt.pos(designer.util.center(_pos,_lt.left().pos()))
+                    	}
+                    	var S={x:_pos.x,y:_pos.y};
+                    	if(designer.util.isLine(_lt.left().pos(),S,_rt.right().pos())){
+                    		_t="small";
+                    		_n.attr(_o.attr.smallDot);
+                    		this.pos(S);
+                    		var P=_lt;
+                    		_lt.left().right(_lt.right());
+                    		_lt=_lt.left();P.remove();
+                    		var R=_rt;
+                    		_rt.right().left(_rt.left());
+                    		_rt=_rt.right();
+                    		R.remove()
+                    	}
+                    	break;
+                    case"small":
+                    	if(_lt&&_rt&&!designer.util.isLine(_lt.pos(),{x:_pos.x,y:_pos.y},_rt.pos())){
+                    		_t="big";
+                    		_n.attr(_o.attr.bigDot);
+                    		var P=new dot("small",designer.util.center(_lt.pos(),_pos),_lt,_lt.right());
+                    		_lt.right(P);
+                    		_lt=P;
+                    		var R=new dot("small",designer.util.center(_rt.pos(),_pos),_rt.left(),_rt);
+                    		_rt.left(R);
+                    		_rt=R
+                    	}
+                    	break;
                     case"to":if(_lt&&_lt.left()&&_lt.left().type()=="from"){_lt.left().pos(designer.util.connPoint(_from.getBBox(),_pos))}if(_lt&&_lt.left()){_lt.pos(designer.util.center(_pos,_lt.left().pos()))}break
                 }
                 refreshpath()
@@ -731,7 +792,7 @@
                     p+="L"+d.pos().x+" "+d.pos().y
                 }
                 var arrPos = designer.util.arrow(d.left().pos(),d.pos(),_o.attr.arrow.radius);
-                arr="M"+arrPos[0].x+" "+arrPos[0].y+"L"+arrPos[1].x+" "+arrPos[1].y+"L"+arrPos[2].x+" "+arrPos[2].y+"_r";
+                arr="M"+arrPos[0].x+" "+arrPos[0].y+"L"+arrPos[1].x+" "+arrPos[1].y+"L"+arrPos[2].x+" "+arrPos[2].y+"z";
                 return[p,arr]
             };
             this.toJson=function(){
@@ -818,10 +879,10 @@
                 if(!designer.config.editable){return}
                 _text.attr({x:_ox+r,y:_oy+o})
             },
-            function(){_ox=_text.attr("_dotList");_oy=_text.attr("_ox")},
+            function(){_ox=_text.attr("x");_oy=_text.attr("y")},
             function(){
                 var o=_dotList.midDot().pos();
-                _textPos ={x:_text.attr("_dotList")-o.x,y:_text.attr("_ox")-o.y}
+                _textPos ={x:_text.attr("x")-o.x,y:_text.attr("y")-o.y}
             });
         refreshpath();
         snaker([_path.node,_arrow.node]).bind("click",function(){
@@ -902,7 +963,7 @@
             var hx = Math.round(_textPos .x);
             var r="<transition offset=\""+hx+","+Math.round(_textPos .y)+"\" to=\""+_to.getName()+"\" ";
             var dots=_dotList.toXml();
-            if(dots!="") r+=" _id=\""+_dotList.toXml()+"\" ";
+            if(dots!="") r+=" g=\""+_dotList.toXml()+"\" ";
             for(var o in _o.props){
                 if(o=="name"&&_o.props[o].value==""){
                     r+=o+"=\""+_id+"\" ";
@@ -952,6 +1013,9 @@
         this.text=function(){
             return _text.attr("text")
         };
+        this.name=function() {
+            return _o.props["name"].value;
+        }
         this.attr=function(o){
             if(o&&o.path){
                 _path.attr(o.path)
@@ -977,7 +1041,7 @@
 			_pdiv.show();
 			for(var l in props){
 				if(!props[l].name) continue;
-				if(props[l].name=="name"&&props[l].value==""){
+				if((props[l].name=="name"||props[l].name=="displayName")&&props[l].value==""){
 					props[l].value=src.getId()
 				}
 				props[l].value=props[l].value.replace(/#1/g,"'");
@@ -1096,6 +1160,7 @@
 					}
 				}
 				i+=">\n";
+                var tarray = new Array();
 				for(var node in _states){
 					if(_states[node]){
 						i+=_states[node].toBeforeXml();
@@ -1108,6 +1173,7 @@
 										alert("连接线名称不能为空");
 										return
 									}else{
+                                        tarray.push(_paths[transition].name());
 										i+="\n";
 										i+=transitionXml;
 									}
@@ -1120,7 +1186,13 @@
 					}
 				}
 				i+="</process>";
-				
+                var nary=tarray.sort();
+                for(var idx=0;idx<tarray.length;idx++){
+                    if (nary[idx]==nary[idx+1]){
+                        alert("连接线名称不能重复[" + nary[idx] + "]");
+                        return;
+                    }
+                }
 				designer.config.tools.save.onclick(i)
 			});
 			new designer.props({},_r)
@@ -1162,10 +1234,12 @@
 				if(!rmap[_paths[h].from().getName()]){
 					rmap[_paths[h].from().getName()]={rect:_paths[h].from(),paths:{}}
 				}
-				rmap[_paths[h].from().getName()].paths[_paths[h].text()]=_paths[h];
+
 				if(!rmap[_paths[h].to().getName()]){
 					rmap[_paths[h].to().getName()]={rect:_paths[h].to(),paths:{}}
 				}
+                rmap[_paths[h].from().getName()].paths[_paths[h].name()]=_paths[h];
+                //alert(_paths[h].from().getName() + "======>" + _paths[h].name());
 			}
 			for(var u=0;u<hr.rects.length;u++){
 				if(rmap[hr.rects[u].name]){
